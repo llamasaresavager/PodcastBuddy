@@ -5,6 +5,9 @@ from pydantic import BaseModel
 from io import BytesIO
 import main
 import json
+from fastapi import Depends
+from starlette.responses import RedirectResponse
+from starlette.requests import Request
 
 app = FastAPI()
 
@@ -31,6 +34,7 @@ class TranscriptionSettings(BaseModel):
     batch_size: int
     compute_type: str
     dump_model: bool
+    api_key: str
 
     class Config:
         schema_extra = {
@@ -62,14 +66,13 @@ async def process_audio(file: UploadFile = Form(...), settings: str = Form(...))
     try:
         metadata = json.loads(settings)
         audio_file = BytesIO(await file.read())
-        settings = json.loads(settings)
-        settings = TranscriptionSettings(**metadata)
-        validate_settings(settings)
+        t_settings = TranscriptionSettings(**metadata)
+        validate_settings(t_settings)
     except Exception as e:
         raise HTTPException(status_code=400, detail="Failed to process the uploaded file or parse the settings.")
 
     try:
-        result = main.main(settings.task, audio_file, main.user_device, settings.batch_size, settings.compute_type, settings.dump_model, settings.min_speakers, settings.max_speakers, settings.whisper_model)
+        result = main.main(t_settings.task, audio_file, main.user_device, t_settings.batch_size, t_settings.compute_type, t_settings.dump_model, t_settings.min_speakers, t_settings.max_speakers, t_settings.whisper_model, t_settings.api_key)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
