@@ -36,6 +36,23 @@ if st.button("Process Audio"):
                 }), 'application/json')
             }
         )
+        request_metadata =  json.dumps({
+                    "task": task,
+                    "min_speakers": min_speakers,
+                    "max_speakers": max_speakers,
+                    "whisper_model": whisper_model,
+                    "batch_size": batch_size,
+                    "compute_type": compute_type,
+                    "dump_model": dump_model
+                })
+        
+        multipart_data = MultipartEncoder(
+            fields={
+                "file": (audio_file.name, audio_file.getvalue(), "audio/wav"),
+                "settings": request_metadata
+            }
+        )
+
 
         # Post request to the FastAPI
         response = requests.post(

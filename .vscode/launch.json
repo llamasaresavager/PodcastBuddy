@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "FastAPI",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "app:app",
+                "--reload",
+                "--port",
+                "8000"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "Streamlit",
+            "type": "python",
+            "request": "launch",
+            "module": "streamlit",
+            "args": [
+                "run",
+                "streamlit_ui.py"
+            ],
+            "justMyCode": true
+        }
+    ],
+    "compounds": [
+        {
+            "name": "FastAPI + Streamlit",
+            "configurations": ["FastAPI", "Streamlit"]
+        }
+    ]
+}
