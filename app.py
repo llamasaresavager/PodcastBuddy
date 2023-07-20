@@ -74,3 +74,7 @@ async def process_audio(file: UploadFile = Form(...), settings: str = Form(...))
         raise HTTPException(status_code=500, detail=str(e))
 
     return result
+
+@app.get("/status")
+async def read_status():
+    return {"status": "OK"}
