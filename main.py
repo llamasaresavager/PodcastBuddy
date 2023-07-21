@@ -39,11 +39,11 @@ def save_result_to_json(result, output_file):
         json.dump(result, file)
     print("Result saved to:", output_file)
 
-def main(task, audio_file: BytesIO, user_device, batch_size, compute_type, dump_model, min_speakers, max_speakers, whisper_model, hf_api_key):
+def main(task, audio_file: bytes, user_device, batch_size, compute_type, dump_model, min_speakers, max_speakers, whisper_model, hf_api_key):
 
     # Save the audio file to a temporary file
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as fp:
-        fp.write(audio_file.read())
+        fp.write(audio_file)
         audio_file_path = fp.name
 
     if task == "t":

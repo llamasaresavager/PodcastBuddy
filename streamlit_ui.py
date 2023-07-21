@@ -28,7 +28,35 @@ def check_hf_api_key():
     tb_hf_apikey = st.text_input('Hugging Face API Key', hf_api_key)
 
     return hf_api_key
-       
+
+def format_result(result, include_word_segments, include_speaker, include_text, include_time, include_words):
+    formatted_result = {}
+
+    if include_word_segments and 'word_segments' in result:
+        formatted_result["word_segments"] = result["word_segments"]
+
+    if 'segments' in result:
+        formatted_result["segments"] = []
+        for segment in result["segments"]:
+            seg_dict = {}
+
+            if include_text and 'text' in segment:
+                seg_dict['text'] = segment['text']
+
+            if include_time and 'start' in segment and 'end' in segment:
+                seg_dict['time'] = f"{segment['start']}-{segment['end']}"
+
+            if include_words and 'words' in segment:
+                seg_dict['words'] = segment['words']
+
+            if include_speaker and 'speaker' in segment:
+                seg_dict['speaker'] = segment['speaker']
+
+            formatted_result["segments"].append(seg_dict)
+
+    return formatted_result
+
+
 # Wait for the FastAPI server to start
 server_message = st.empty()
 server_message.info("Waiting for the FastAPI server to start. This should only take a moment...")
@@ -42,7 +70,6 @@ hf_api_key = check_hf_api_key()
 
 # Streamlit sidebar for user input
 st.sidebar.header("Transcription and Diaritization Settings")
-
 task = st.sidebar.selectbox("Task", ["t", "td"])
 min_speakers = st.sidebar.slider("Minimum Speakers", 1, 10, 2)
 max_speakers = st.sidebar.slider("Maximum Speakers", 1, 10, 2)
@@ -57,7 +84,14 @@ dump_model = st.sidebar.checkbox("Dump Model (Clear GPU cache after use)")
 st.header("Upload Audio File")
 audio_file = st.file_uploader("Select audio file", type=['wav'])
 
-#TODO: add 
+# Format Results
+st.sidebar.header("Format Results")
+word_segments = st.sidebar.checkbox("Word Segments")
+st.sidebar.markdown("---")  # Add a horizontal rule
+include_speaker = st.sidebar.checkbox("Speaker")
+include_text = st.sidebar.checkbox("Text")
+include_time = st.sidebar.checkbox("Time Range")
+include_words = st.sidebar.checkbox("Words")
 
 # Process and Display Outputs
 if st.button("Process Audio"):
@@ -74,40 +108,31 @@ if st.button("Process Audio"):
                         "dump_model": dump_model,
                         "api_key": hf_api_key  # Add the Hugging Face API key to the request
                     })
-
-            multipart_data = MultipartEncoder(
-                fields={
-                    "file": (audio_file.name, audio_file.getvalue(), "audio/wav"),
-                    "settings": request_metadata,
-                }
-            )
-
             st.spinner("Processing... This could take a few minutes.")
             
             # Post request to the FastAPI
             response = requests.post(
                 f"{FASTAPI_URL}/process_audio",
-                data=multipart_data,
-                headers={'Content-Type': multipart_data.content_type}
+                data=audio_file.read(),
+                headers={'Content-Type': "audio/wav", "settings": request_metadata}
             )
 
             if response.status_code == 200:
                 result = response.json()
 
-                # Display the result
+                # Format and display the result
                 if result:
                     st.success("Processing complete!")
                     st.balloons()
 
                     st.header("Results")
-                    st.json(result)
+                    formatted_result = format_result(result, word_segments, include_speaker, include_text, include_time, include_words)
+                    st.json(formatted_result)
+                    
+                    # Download button for the formatted results
+                    st.download_button(label="Download Formatted Results", data=json.dumps(formatted_result).encode(), file_name='formatted_results.json', mime='application/json')
 
                 else:
                     st.warning("The result is empty.")
             else:
                 st.error(f"Failed to process the audio file. Status code: {response.status_code}. Error: {response.text}")
-
-        else:
-            st.error("Please upload an audio file and ensure that the minimum number of speakers is less than or equal to the maximum number of speakers.")
-    else:
-        st.warning("Hugging Face API Key not found. Please input your API Key.")

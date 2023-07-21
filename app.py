@@ -62,14 +62,14 @@ def validate_settings(settings: TranscriptionSettings):
         raise HTTPException(status_code=400, detail="Invalid batch size. Value should be between 1 and 64.")
 
 @app.post("/process_audio")
-async def process_audio(file: UploadFile = Form(...), settings: str = Form(...)):
+async def process_audio(request: Request):
     try:
-        metadata = json.loads(settings)
-        audio_file = BytesIO(await file.read())
+        metadata = json.loads(request.headers["settings"])
+        audio_file = await request.body()
         t_settings = TranscriptionSettings(**metadata)
         validate_settings(t_settings)
     except Exception as e:
-        raise HTTPException(status_code=400, detail="Failed to process the uploaded file or parse the settings.")
+        raise HTTPException(status_code=400, detail="Failed to process the uploaded file or parse the settings."+ e)
 
     try:
         result = main.main(t_settings.task, audio_file, main.user_device, t_settings.batch_size, t_settings.compute_type, t_settings.dump_model, t_settings.min_speakers, t_settings.max_speakers, t_settings.whisper_model, t_settings.api_key)
