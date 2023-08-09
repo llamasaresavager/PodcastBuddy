@@ -7,7 +7,6 @@ import os
 
 # Constants
 FASTAPI_URL = 'http://127.0.0.1:8000'  # Update this as needed
-HF_API_KEY_ENV_VAR = 'HUGGINGFACE_API_KEY'
 
 # Function to check if the FastAPI server is running
 def is_server_running(url):
@@ -66,11 +65,10 @@ server_message.empty()
 st.success("FastAPI server is running!")
 
 # Check and validate Hugging Face API key
-hf_api_key = check_hf_api_key()
+hf_api_key = "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"
 
 # Streamlit sidebar for user input
 st.sidebar.header("Transcription and Diaritization Settings")
-task = st.sidebar.selectbox("Task", ["t", "td"])
 min_speakers = st.sidebar.slider("Minimum Speakers", 1, 10, 2)
 max_speakers = st.sidebar.slider("Maximum Speakers", 1, 10, 2)
 if min_speakers > max_speakers:
@@ -99,7 +97,6 @@ if st.button("Process Audio"):
         if audio_file is not None and min_speakers <= max_speakers:
             # Prepare data for the FastAPI
             request_metadata =  json.dumps({
-                        "task": task,
                         "min_speakers": min_speakers,
                         "max_speakers": max_speakers,
                         "whisper_model": whisper_model,

@@ -27,7 +27,6 @@ app.add_middleware(
 )
 
 class TranscriptionSettings(BaseModel):
-    task: str
     min_speakers: int
     max_speakers: int
     whisper_model: str
@@ -39,7 +38,6 @@ class TranscriptionSettings(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "task": "t",
                 "min_speakers": 2,
                 "max_speakers": 2,
                 "whisper_model": "large-v2",
@@ -50,8 +48,6 @@ class TranscriptionSettings(BaseModel):
         }
 
 def validate_settings(settings: TranscriptionSettings):
-    if settings.task not in ["t", "td"]:
-        raise HTTPException(status_code=400, detail="Invalid task. Valid values are 't' or 'td'.")
     if settings.compute_type not in ["float16", "int8"]:
         raise HTTPException(status_code=400, detail="Invalid compute_type. Valid values are 'float16' or 'int8'.")
     if settings.whisper_model not in ["tiny", "base", "small", "medium", "large", "large-v2"]:
@@ -72,7 +68,7 @@ async def process_audio(request: Request):
         raise HTTPException(status_code=400, detail="Failed to process the uploaded file or parse the settings."+ e)
 
     try:
-        result = main.main(t_settings.task, audio_file, main.user_device, t_settings.batch_size, t_settings.compute_type, t_settings.dump_model, t_settings.min_speakers, t_settings.max_speakers, t_settings.whisper_model, t_settings.api_key)
+        result = main.main(audio_file, main.user_device, t_settings.batch_size, t_settings.compute_type, t_settings.dump_model, t_settings.min_speakers, t_settings.max_speakers, t_settings.whisper_model, t_settings.api_key)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

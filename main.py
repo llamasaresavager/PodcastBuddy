@@ -18,11 +18,6 @@ from diarized_transcript import assign_word_speakers
 #may be best to move into main
 user_device = device("cuda" if cuda.is_available() else "cpu").type # ["cuda", "cpu"]
 
-
-
-
-
-
 def align_with_whisper(result, audio, device):
     model_a, metadata = whisperx.load_align_model(language_code=result["language"], device=device)
     result = whisperx.align(result["segments"], model_a, metadata, audio, device, return_char_alignments=False)
@@ -39,29 +34,20 @@ def save_result_to_json(result, output_file):
         json.dump(result, file)
     print("Result saved to:", output_file)
 
-def main(task, audio_file: bytes, user_device, batch_size, compute_type, dump_model, min_speakers, max_speakers, whisper_model, hf_api_key):
+def main(audio_file: bytes, user_device, batch_size, compute_type, dump_model, min_speakers, max_speakers, whisper_model, hf_api_key):
 
     # Save the audio file to a temporary file
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as fp:
         fp.write(audio_file)
         audio_file_path = fp.name
 
-    if task == "t":
-        result = transcribe_with_whisper(audio_file_path, user_device, batch_size, compute_type, whisper_model, dump_model)
-        result = align_with_whisper(result, whisperx.load_audio(audio_file_path), user_device)
-        return result
+    result = transcribe_with_whisper(audio_file_path, user_device, batch_size, compute_type, whisper_model, dump_model)
+    result = align_with_whisper(result, whisperx.load_audio(audio_file_path), user_device)
 
-    elif task == "td":
-        result = transcribe_with_whisper(audio_file_path, user_device, batch_size, compute_type, whisper_model, dump_model)
-        result = align_with_whisper(result, whisperx.load_audio(audio_file_path), user_device)
-
-        diarize_model = whisperx.DiarizationPipeline(use_auth_token=hf_api_key, device=user_device)
-        diarize_segments = assign_speaker_labels(audio_file_path, diarize_model, min_speakers, max_speakers)
-        result = assign_word_speakers(diarize_segments, result)
-        return result
-    else:
-        raise ValueError(f"Invalid task: {task}. Please select either 't' or 'td'.")
-
+    diarize_model = whisperx.DiarizationPipeline(use_auth_token=hf_api_key, device=user_device)
+    diarize_segments = assign_speaker_labels(audio_file_path, diarize_model, min_speakers, max_speakers)
+    result = assign_word_speakers(diarize_segments, result)
+    return result
 
     #if __name__ == "__main__":
     
