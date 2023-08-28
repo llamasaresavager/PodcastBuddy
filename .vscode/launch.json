@@ -21,7 +21,7 @@
             "module": "streamlit",
             "args": [
                 "run",
-                "streamlit_ui.py"
+                "ui-streamlit/streamlit_ui.py"
             ],
             "justMyCode": true
         }

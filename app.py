@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from pydantic import BaseModel
 from io import BytesIO
-import main
+import transcription.main as main
 import json
 from fastapi import Depends
 from starlette.responses import RedirectResponse
